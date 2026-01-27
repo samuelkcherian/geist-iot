@@ -13,7 +13,7 @@ Current systems rely on uncomfortable wearables (which are often forgotten) or c
 
 ## 🚀 Key Features
 * **Invisible Monitoring:** No cameras, no wearables.
-* **Real-Time Alerts:** Instant notifications via **Socket.IO**.
+* **Real-Time Alerts:** Instant notifications.
 * **Multi-Sensory Feedback:** * 📱 **Visual:** App turns Red/Orange.
     * 📳 **Haptic:** Custom vibration patterns on the admin's phone.
     * 🔊 **Audio:** Push notifications with sound.
@@ -35,16 +35,5 @@ This project is based on the research paper:
 * *Methodology:* Uses LSTM (Long Short-Term Memory) networks to analyze CSI amplitude/phase.
 * *Key Finding:* Achieved ~83.3% accuracy in fall detection by filtering "static" paths using PCA.
 
-## 📸 Screenshots
-| Normal State | Fall Detected | Emergency Log |
-|:---:|:---:|:---:|
-| *(Add your screenshot 1 here)* | *(Add your screenshot 2 here)* | *(Add your screenshot 3 here)* |
+## 🚧 Still under Construction 
 
-## ⚡ How to Run
-### 1. Backend (The Brain)
-```bash
-# Install dependencies
-pip install flask flask-socketio eventlet
-
-# Run the server
-python server.py
