@@ -1,0 +1,23 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+geist.db
+
+# --- Flutter ---
+geist_app/build/
+geist_app/.dart_tool/
+geist_app/.flutter-plugins
+geist_app/.flutter-plugins-dependencies
+geist_app/.pub-cache/
+geist_app/.pub/
+geist_app/android/.gradle
+geist_app/android/local.properties
+geist_app/ios/.generated/
+
+# --- IDEs ---
+.vscode/
+.idea/
+*.iml
