@@ -1,11 +1,16 @@
 import sqlite3
 from flask import Flask, jsonify
+from flask_cors import CORS
 from flask_socketio import SocketIO, emit
 from datetime import datetime
+import json
+import threading
+import paho.mqtt.client as mqtt
 
 app = Flask(__name__)
+CORS(app)
 app.config['SECRET_KEY'] = 'geist_secret'
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, cors_allowed_origins="*", logger=True, engineio_logger=True)
 
 # --- DATABASE SETUP ---
 def init_db():
@@ -29,6 +34,47 @@ def log_event(event_type):
     c.execute("INSERT INTO logs (event_type, timestamp) VALUES (?, ?)", (event_type, time_str))
     conn.commit()
     conn.close()
+
+# --- MQTT SETUP ---
+MQTT_BROKER = "192.168.1.4"
+MQTT_PORT = 1883
+MQTT_TOPIC = "home/espectre/node1"
+
+def on_mqtt_connect(client, userdata, flags, rc):
+    print(f"Connected to MQTT broker with result code {rc}")
+    client.subscribe(MQTT_TOPIC)
+
+def on_mqtt_message(client, userdata, msg):
+    try:
+        payload = msg.payload.decode('utf-8')
+        data = json.loads(payload)
+        state = data.get("state")
+        
+        if state == "motion":
+            print("MQTT: Motion detected! Triggering FALL state.")
+            socketio.emit('status_update', {'status': 'FALL', 'color': 'red'})
+            log_event("Fall Detected")
+        elif state == "idle":
+            print("MQTT: System idle. Resetting to Safe state.")
+            socketio.emit('status_update', {'status': 'Safe', 'color': 'green'})
+    except Exception as e:
+        print(f"Error parsing MQTT message: {e}")
+
+mqtt_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1)
+mqtt_client.on_connect = on_mqtt_connect
+mqtt_client.on_message = on_mqtt_message
+
+def start_mqtt():
+    try:
+        print(f"Connecting to MQTT broker at {MQTT_BROKER}:{MQTT_PORT}...")
+        mqtt_client.connect(MQTT_BROKER, MQTT_PORT, 60)
+        mqtt_client.loop_forever()
+    except Exception as e:
+        print(f"MQTT Connection failed: {e}")
+
+# Start MQTT client in a background thread
+mqtt_thread = threading.Thread(target=start_mqtt, daemon=True)
+mqtt_thread.start()
 
 @app.route('/')
 def index():
@@ -68,4 +114,4 @@ def trigger_event(event_type):
 
 if __name__ == '__main__':
     # host='0.0.0.0' allows external connection
-    socketio.run(app, host='0.0.0.0', port=5000, debug=True)
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True, allow_unsafe_werkzeug=True)

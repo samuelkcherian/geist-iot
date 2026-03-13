@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert'; // For converting JSON
+import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/colors.dart';
 
 class LogsScreen extends StatefulWidget {
@@ -22,8 +23,9 @@ class _LogsScreenState extends State<LogsScreen> {
   }
 
   Future<void> _fetchLogs() async {
-    // REPLACE WITH YOUR IP ADDRESS
-    const String serverUrl = 'http://192.168.1.4:5000/api/logs';
+    final prefs = await SharedPreferences.getInstance();
+    String savedIp = prefs.getString('backend_ip') ?? '192.168.1.4';
+    String serverUrl = 'http://$savedIp:5000/api/logs';
 
     try {
       final response = await http.get(Uri.parse(serverUrl));

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../utils/colors.dart';
 import 'main_layout.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,13 +15,28 @@ class _LoginScreenState extends State<LoginScreen> {
   // 1. Create Controllers to capture user input
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _ipController = TextEditingController();
 
-  void _handleLogin() {
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedIp();
+  }
+
+  Future<void> _loadSavedIp() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _ipController.text = prefs.getString('backend_ip') ?? '10.172.83.136';
+    });
+  }
+
+  void _handleLogin() async {
     String email = _emailController.text.trim();
     String password = _passwordController.text.trim();
+    String ip = _ipController.text.trim();
 
     // 2. Simple Validation Logic
-    if (email.isEmpty || password.isEmpty) {
+    if (email.isEmpty || password.isEmpty || ip.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Please enter both email and password"),
@@ -33,7 +49,12 @@ class _LoginScreenState extends State<LoginScreen> {
     // Optional: Add specific credentials check if you want
     // if (email == "admin@geist.com" && password == "admin123") { ... }
 
+    // Save IP Address before navigating
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('backend_ip', ip);
+
     // 3. Navigate if valid
+    if (!mounted) return;
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const MainLayout()),
@@ -80,8 +101,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 icon: Icons.lock_outline,
                 isPassword: true,
               ),
+              const SizedBox(height: 20),
 
-              const SizedBox(height: 50),
+              // IP Address Field
+              _buildTextField(
+                controller: _ipController,
+                hint: "Backend IP Address",
+                icon: Icons.router_outlined,
+              ),
+
+              const SizedBox(height: 40),
 
               // Login Button
               SizedBox(

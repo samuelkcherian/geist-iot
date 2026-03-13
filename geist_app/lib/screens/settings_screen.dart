@@ -15,6 +15,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = true;
   bool _autoCallEmergency = false;
   double _sensitivity = 75.0;
+  final TextEditingController _ipController = TextEditingController();
 
   @override
   void initState() {
@@ -30,6 +31,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _notificationsEnabled = prefs.getBool('notifications') ?? true;
       _autoCallEmergency = prefs.getBool('autoCall') ?? false;
       _sensitivity = prefs.getDouble('sensitivity') ?? 75.0;
+      _ipController.text = prefs.getString('backend_ip') ?? '10.172.83.136';
     });
   }
 
@@ -40,6 +42,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await prefs.setBool(key, value);
     } else if (value is double) {
       await prefs.setDouble(key, value);
+    } else if (value is String) {
+      await prefs.setString(key, value);
     }
   }
 
@@ -148,6 +152,53 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       setState(() => _autoCallEmergency = val);
                       _saveSetting('autoCall', val); // Save
                     },
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // --- NETWORK SETTINGS CARD ---
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Network Configuration",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    "Update the backend server IP address if your network changes. Restart the app after saving.",
+                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  ),
+                  const SizedBox(height: 15),
+                  TextField(
+                    controller: _ipController,
+                    decoration: InputDecoration(
+                      labelText: "Backend IP",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.save, color: AppColors.primary),
+                        onPressed: () {
+                          _saveSetting('backend_ip', _ipController.text.trim());
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("IP Saved! Please restart the app."),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                   ),
                 ],
               ),

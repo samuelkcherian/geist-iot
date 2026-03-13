@@ -1,5 +1,6 @@
-// lib/screens/socket_service.dart
+// lib/services/socket_service.dart
 import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SocketService {
   late IO.Socket socket;
@@ -11,12 +12,13 @@ class SocketService {
     required this.onConnect, // <--- Add this
   });
 
-  void initConnection() {
-    // ⚠️ DOUBLE CHECK YOUR IP ADDRESS ⚠️
-    const String serverUrl = 'http://192.168.1.4:5000';
+  Future<void> initConnection() async {
+    final prefs = await SharedPreferences.getInstance();
+    String savedIp = prefs.getString('backend_ip') ?? '10.172.83.136';
+    String serverUrl = 'http://$savedIp:5000';
+    print('Connecting to Socket.IO at $serverUrl');
 
     socket = IO.io(serverUrl, <String, dynamic>{
-      'transports': ['websocket'],
       'autoConnect': false,
     });
 
@@ -24,6 +26,18 @@ class SocketService {
     socket.onConnect((_) {
       print('✅ Connected to Geist Backend');
       onConnect(); // <--- Trigger the UI update immediately
+    });
+
+    socket.onConnectError((data) {
+      print('❌ Socket Connection Error: $data');
+    });
+
+    socket.onError((data) {
+      print('❌ Socket Error: $data');
+    });
+
+    socket.onDisconnect((_) {
+      print('🔌 Socket Disconnected');
     });
 
     // 2. Listen for Data
