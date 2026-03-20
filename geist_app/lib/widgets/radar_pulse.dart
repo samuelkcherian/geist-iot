@@ -2,8 +2,8 @@
 import 'package:flutter/material.dart';
 
 class RadarPulse extends StatefulWidget {
-  final bool isAlarm;
-  const RadarPulse({super.key, required this.isAlarm});
+  final String status;
+  const RadarPulse({super.key, required this.status});
 
   @override
   State<RadarPulse> createState() => _RadarPulseState();
@@ -31,7 +31,29 @@ class _RadarPulseState extends State<RadarPulse>
 
   @override
   Widget build(BuildContext context) {
-    Color pulseColor = widget.isAlarm ? Colors.red : Colors.greenAccent;
+    Color pulseColor;
+    IconData iconData;
+
+    switch (widget.status) {
+      case 'FALL':
+        pulseColor = Colors.red;
+        iconData = Icons.warning_rounded;
+        break;
+      case 'WALK':
+        pulseColor = Colors.yellow.shade600;
+        iconData = Icons.directions_walk;
+        break;
+      case 'SIT':
+        pulseColor = Colors.blue;
+        iconData = Icons.event_seat;
+        break;
+      case 'EMPTY':
+      case 'Safe':
+      default:
+        pulseColor = Colors.greenAccent;
+        iconData = Icons.radar;
+        break;
+    }
 
     return AnimatedBuilder(
       animation: _controller,
@@ -60,9 +82,16 @@ class _RadarPulseState extends State<RadarPulse>
                 ],
               ),
               child: Icon(
-                widget.isAlarm ? Icons.warning_rounded : Icons.radar,
+                iconData,
                 color: Colors.white,
-                size: 20,
+                size: 24,
+                shadows: const [
+                  Shadow(
+                    color: Colors.black45,
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  ),
+                ],
               ),
             ),
           ],

@@ -10,7 +10,7 @@ import paho.mqtt.client as mqtt
 app = Flask(__name__)
 CORS(app)
 app.config['SECRET_KEY'] = 'geist_secret'
-socketio = SocketIO(app, cors_allowed_origins="*", logger=True, engineio_logger=True)
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading', logger=True, engineio_logger=True)
 
 # --- DATABASE SETUP ---
 def init_db():
@@ -50,13 +50,19 @@ def on_mqtt_message(client, userdata, msg):
         data = json.loads(payload)
         state = data.get("state")
         
-        if state == "motion":
-            print("MQTT: Motion detected! Triggering FALL state.")
+        if state in ["fall", "motion"]:
+            print("MQTT: Fall/Motion detected! Triggering FALL state.")
             socketio.emit('status_update', {'status': 'FALL', 'color': 'red'})
             log_event("Fall Detected")
-        elif state == "idle":
-            print("MQTT: System idle. Resetting to Safe state.")
-            socketio.emit('status_update', {'status': 'Safe', 'color': 'green'})
+        elif state == "walk":
+            print("MQTT: Walk detected.")
+            socketio.emit('status_update', {'status': 'WALK', 'color': 'yellow'})
+        elif state == "sit":
+            print("MQTT: Sit detected.")
+            socketio.emit('status_update', {'status': 'SIT', 'color': 'blue'})
+        elif state in ["empty", "idle"]:
+            print("MQTT: Room Empty/Idle. Safe state.")
+            socketio.emit('status_update', {'status': 'EMPTY', 'color': 'green'})
     except Exception as e:
         print(f"Error parsing MQTT message: {e}")
 

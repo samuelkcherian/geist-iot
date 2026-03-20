@@ -19,7 +19,8 @@ class SocketService {
     print('Connecting to Socket.IO at $serverUrl');
 
     socket = IO.io(serverUrl, <String, dynamic>{
-      'autoConnect': false,
+      'transports': ['websocket'],
+      'autoConnect': true,
     });
 
     // 1. Listen for Connection Success

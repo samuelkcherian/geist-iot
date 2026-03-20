@@ -14,7 +14,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   String _statusText = "Initializing...";
-  bool _isFallDetected = false;
+  String _currentStatus = "Safe";
   bool _isConnected = false;
 
   late SocketService _socketService;
@@ -42,7 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted) {
       setState(() {
         _isConnected = true;
-        if (!_isFallDetected) {
+        if (_currentStatus != "FALL") {
           _statusText = "Active Monitoring";
         }
       });
@@ -53,13 +53,16 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
     setState(() {
       String status = data['status'];
+      _currentStatus = status;
       if (status == "FALL") {
         _statusText = "CRITICAL FALL DETECTED";
-        _isFallDetected = true;
         _notificationService.showFallAlert();
+      } else if (status == "WALK") {
+        _statusText = "Subject Walking";
+      } else if (status == "SIT") {
+        _statusText = "Subject Seated";
       } else {
-        _statusText = "Active Monitoring";
-        _isFallDetected = false;
+        _statusText = "Room Empty";
       }
     });
   }
@@ -68,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      floatingActionButton: _isFallDetected
+      floatingActionButton: _currentStatus == "FALL"
           ? FloatingActionButton.extended(
               onPressed: _makeEmergencyCall,
               backgroundColor: AppColors.alertRed,
@@ -159,18 +162,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 padding: const EdgeInsets.all(25),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: _isFallDetected
-                        ? [AppColors.alertRed, AppColors.alertOrange]
-                        : [AppColors.primaryDark, AppColors.primaryLight],
+                    colors: _getGradientColors(),
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
-                      color: _isFallDetected
-                          ? AppColors.alertRed.withOpacity(0.4)
-                          : AppColors.primaryDark.withOpacity(0.4),
+                      color: _getShadowColor(),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -197,6 +196,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 color: Colors.white,
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
+                                shadows: [
+                                  Shadow(color: Colors.black38, blurRadius: 2, offset: Offset(0, 1)),
+                                ],
                               ),
                             ),
                           ),
@@ -205,17 +207,24 @@ class _HomeScreenState extends State<HomeScreen> {
                             _statusText,
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 20,
+                              fontSize: 22,
                               height: 1.2,
                               fontWeight: FontWeight.bold,
+                              shadows: [
+                                Shadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2)),
+                              ],
                             ),
                           ),
                           const SizedBox(height: 5),
                           Text(
                             _isConnected ? "System Online" : "Connecting...",
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.7),
+                              color: Colors.white.withOpacity(0.9),
                               fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              shadows: const [
+                                Shadow(color: Colors.black38, blurRadius: 2, offset: Offset(0, 1)),
+                              ],
                             ),
                           ),
                         ],
@@ -231,7 +240,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       child: Center(
                         child: _isConnected
-                            ? RadarPulse(isAlarm: _isFallDetected)
+                            ? RadarPulse(status: _currentStatus)
                             : const CircularProgressIndicator(
                                 color: Colors.white,
                               ),
@@ -364,5 +373,30 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+
+  List<Color> _getGradientColors() {
+    if (_currentStatus == "FALL") {
+      return [AppColors.alertRed, AppColors.alertOrange];
+    } else if (_currentStatus == "WALK") {
+      return [Colors.amber.shade700, Colors.amber.shade400];
+    } else if (_currentStatus == "SIT") {
+      return [Colors.blue.shade700, Colors.blue.shade400];
+    } else {
+      // Empty: Dark slate gray to differentiate from the blue 'Sit' state
+      return [const Color(0xFF2C3E50), const Color(0xFF4CA1AF)];
+    }
+  }
+
+  Color _getShadowColor() {
+    if (_currentStatus == "FALL") {
+      return AppColors.alertRed.withOpacity(0.4);
+    } else if (_currentStatus == "WALK") {
+      return Colors.amber.shade600.withOpacity(0.4);
+    } else if (_currentStatus == "SIT") {
+      return Colors.blue.withOpacity(0.4);
+    } else {
+      return const Color(0xFF2C3E50).withOpacity(0.4);
+    }
   }
 }
